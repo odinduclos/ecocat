@@ -21,3 +21,16 @@ git clone bootstrap-material-design
   http://getbootstrap.com/
   #cordova
   https://cordova.apache.org/#getstarted
+
+#TODO app
+implémenter facebook sur login
+implémenter authentification via API pour login et subscribe
+implémenter maj params via API
+implémenter BDD localStorage
+
+#TODO serveur nodejs
+implémenter sockets
+implémenter BDD SQL
+implémenter page login
+implémenter page subscribe
+implémenter page params

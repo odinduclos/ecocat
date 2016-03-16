@@ -4,9 +4,8 @@ var api = {
     login: function (inputs) {
         console.log("login", inputs);
         // call API, if (OK) then
-        logged = true;
-        $("#param").show();
-        $.get("ecocat.view.html", app.initView);
+        api.logged = true;
+        app.loadView("ecocat");
     },
     subscribe: function (inputs) {
         console.log("subscribe", inputs);
@@ -41,11 +40,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
-        if (!api.logged) {
-            $.get("login.view.html", app.initView);
-        } else {
-            $.get("ecocat.view.html", app.initView);
-        }
+        app.loadView("ecocat");
         $("#param").on("click", function () {
             console.log($(this));
             $('#param-modal').modal();
@@ -55,19 +50,24 @@ var app = {
         });
         console.log('Received Event: ' + id);
     },
-    security: function (action) {
-        console.log("action", action);
-        if (!api.logged && (action != "login" || action != "subscribe")) {
-            $.get("login.view.html", app.initView);
+    loadView: function (action) {
+        if (action != "login" && action != "subscribe") {
+            if (!api.logged) {
+                $("#param").hide();
+                $.get("login.view.html", app.initView);
+                return;
+            }
+            $("#param").show();
+        } else {
+            $("#param").hide();
         }
+        $.get(action + ".view.html", app.initView);
     },
     initView: function (page) {
         if (!api.logged);
         $("section#view").html(page);
         $(".loadview").on("click", function () {
-            var action = $(this).data("action")
-            app.security(action);
-            $.get(action + ".view.html", app.initView);
+            app.loadView($(this).data("action"));
         });
         $(".api").on("click", function (e) {
             e.preventDefault();

@@ -7,11 +7,6 @@ cd ecocat
 cordova platform add browser  
 cordova run browser  
 
-# procédure  
-git clone https://github.com/odinduclos/ecocat.git  
-cd ecocat/www  
-git clone bootstrap-material-design  
-
 #documentation  
   # material design  
   http://fezvrasta.github.io/bootstrap-material-design/bootstrap-elements.html  

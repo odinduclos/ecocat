@@ -1,21 +1,24 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+var api = {
+    logged: false,
+    user: null,
+    login: function (inputs) {
+        console.log("login", inputs);
+        // call API, if (OK) then
+        api.logged = true;
+        app.loadView("ecocat");
+    },
+    subscribe: function (inputs) {
+        console.log("subscribe", inputs);
+        // call API, if (OK) then
+        api.login(inputs);
+    },
+    saveParams: function (inputs) {
+        console.log("save params", inputs);
+        // call API
+
+    }
+}
+$(".app").css({"height": $(window).height()})
 var app = {
     // Application Constructor
     initialize: function() {
@@ -34,17 +37,63 @@ var app = {
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
+        navigator.accelerometer.watchAcceleration(app.successAcceleration, app.errorAcceleration, {frequency: 200});
+        navigator.compass.watchHeading(app.successCompass, app.errorCompass, {frequency: 200});
+    },
+    successAcceleration: function (data) {
+        if (typeof(game) !== "undefined") {
+            game.updateAcc(data);
+        }
+        // console.log(data);
+    },
+    errorAcceleration: function (data) {
+        console.log("Unable to fetch acceleration: ", data);
+    },
+    successCompass: function (data) {
+        if (typeof(game) !== "undefined") {
+            game.updateCompass(data);
+        }
+        // console.log(data);
+    },
+    errorCompass: function (data) {
+        console.log("Unable to fetch compass: ", data);
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
-
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
-
+        app.loadView("ecocat");
+        $("#param").on("click", function () {
+            console.log($(this));
+            $('#param-modal').modal();
+        });
+        $(".close-modal").on("click", function () {
+            $(".modal").modal('hide');
+        });
         console.log('Received Event: ' + id);
+    },
+    loadView: function (action) {
+        if (action != "login" && action != "subscribe") {
+            if (!api.logged) {
+                $("#param").hide();
+                $.get("login.view.html", app.initView);
+                return;
+            }
+            $("#param").show();
+        } else {
+            $("#param").hide();
+        }
+        $.get(action + ".view.html", app.initView);
+    },
+    initView: function (page) {
+        if (!api.logged);
+        $("section#view").html(page);
+        $(".loadview").on("click", function () {
+            app.loadView($(this).data("action"));
+        });
+        $(".api").on("click", function (e) {
+            e.preventDefault();
+            api[$(this).data("action")]($(this).parents("form").find("input"));
+        });
+        $.material.init();
     }
 };
 

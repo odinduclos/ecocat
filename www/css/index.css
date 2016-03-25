@@ -28,7 +28,6 @@ body {
 
 /* Portrait layout (default) */
 .app {
-    
 }
 
 /* Landscape layout (with min-width) */
@@ -82,4 +81,18 @@ body {
     padding: 25px;
     cursor: pointer;
     display: none;
+}
+
+#ecocat {
+    display: block;
+    width: 80px;
+    position: absolute;
+}
+
+.app {
+    background-image: url("../img/stars.png");
+}
+
+.debug {
+    color: white;
 }

@@ -37,26 +37,6 @@ var app = {
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
-        navigator.accelerometer.watchAcceleration(app.successAcceleration, app.errorAcceleration, {frequency: 200});
-        navigator.compass.watchHeading(app.successCompass, app.errorCompass, {frequency: 200});
-    },
-    successAcceleration: function (data) {
-        if (typeof(game) !== "undefined") {
-            game.updateAcc(data);
-        }
-        // console.log(data);
-    },
-    errorAcceleration: function (data) {
-        console.log("Unable to fetch acceleration: ", data);
-    },
-    successCompass: function (data) {
-        if (typeof(game) !== "undefined") {
-            game.updateCompass(data);
-        }
-        // console.log(data);
-    },
-    errorCompass: function (data) {
-        console.log("Unable to fetch compass: ", data);
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {

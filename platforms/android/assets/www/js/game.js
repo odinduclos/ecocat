@@ -1,15 +1,105 @@
 function getRandomIntInclusive(min, max) {
     return Math.floor(Math.random() * (max - min +1)) + min;
 }
-
-var ecocat = $("#ecocat:first");
-var ecocat_width = 80;
-var ecocat_height = 256;
 var width = $(window).width();
 var height = $(window).height();
+
+var game = new Phaser.Game(width, height, Phaser.CANVAS, 'Eco Cat', { preload: preload, create: create, update: update, render: render });
+
+function preload() {
+
+    game.load.image('cat', 'img/nyancat-small.png');
+    game.load.image('bg', 'img/stars.png');
+    game.load.image('star', 'img/star-small.png');
+
+}
+
+var cat;
+var ennemies;
+var heading = null;
+var acceleration = null;
+
+
+function create() {
+
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    game.stage.backgroundColor = '#2d2d2d';
+
+    //  This will check Sprite vs. Sprite collision
+
+    cat = game.add.sprite(200, 200, 'cat');
+
+    game.physics.enable(cat, Phaser.Physics.ARCADE);
+
+    cat.name = 'cat';
+    cat.pivot.x = 40;
+    cat.pivot.y = 128;
+    
+}
+
+function update() {
+
+    // object1, object2, collideCallback, processCallback, callbackContext
+    // game.physics.arcade.collide(sprite1, sprite2, collisionHandler, null, this);
+    navigator.compass.getCurrentHeading(compassSuccess, compassError);
+    navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
+    moveCat();
+
+}
+
+function collisionHandler (obj1, obj2) {
+
+    //  The two sprites are colliding
+    game.stage.backgroundColor = '#992d2d';
+
+}
+
+function render() {
+
+    game.debug.body(cat);
+    game.debug.text('Elapsed seconds: ' + this.game.time.totalElapsedSeconds(), 32, 32);
+
+}
+
+function moveCat() {
+    if (acceleration) {
+        cat.body.velocity.y = (acceleration.z - 5) * -10;
+        cat.body.velocity.x = acceleration.x * -20;
+    }
+}
+
+function compassSuccess (data) {
+    heading = data.trueHeading;
+    $(".debug #true").html("heading: " + heading);
+}
+
+function compassError (data) {
+    $(".debug #true").html("heading: " + data);
+}
+
+function accelerometerSuccess (data) {
+    acceleration = data;
+    $(".debug #x").html("x = " + data.x);
+    $(".debug #y").html("y = " + data.y);
+    $(".debug #z").html("z = " + data.z);
+}
+
+function accelerometerError (data) {
+    $(".debug #x").html("x = " + data);
+    $(".debug #y").html("y = " + data);
+    $(".debug #z").html("z = " + data);
+}
+
+
+
+/*var ecocat = $("#ecocat:first");
+var ecocat_width = 80;
+var ecocat_height = 256;
+
 var bg = $(".app");
-ecocat.offset({top: height / 2, left: width / 2});
-var game = {
+ecocat.offset({top: height / 2, left: width / 2});*/
+/*var game = {
     position: ecocat.offset(),
     acc: null,
     compass: null,
@@ -18,7 +108,7 @@ var game = {
     min_z: 0,
     bg_pos: 0,
     game_speed: 2,
-    frequency: 50,
+    frequency: 100,
     ennemies: [],
     ennemies_count: 0,
     init: function () {
@@ -108,4 +198,4 @@ var game = {
         ecocat.offset({top: x, left: y});
     }
 }
-game.init();
+game.init();*/

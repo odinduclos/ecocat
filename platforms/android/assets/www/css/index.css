@@ -83,16 +83,19 @@ body {
     display: none;
 }
 
-#ecocat {
-    display: block;
-    width: 80px;
-    position: absolute;
-}
-
 .app {
     background-image: url("../img/stars.png");
 }
 
 .debug {
     color: white;
+    position: absolute;
+    z-index: 2;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
 }

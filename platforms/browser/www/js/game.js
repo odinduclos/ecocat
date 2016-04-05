@@ -8,9 +8,9 @@ var game = new Phaser.Game(width, height, Phaser.CANVAS, 'Eco Cat', { preload: p
 
 function preload() {
 
-    game.load.image('cat', '../img/nyancat-small.png');
-    game.load.image('bg', '../img/stars.png');
-    game.load.image('star', '../img/star-small.png');
+    game.load.spritesheet('cat', 'img/nyan-cat.png', 100, 70, 6);
+    game.load.image('star', 'img/star-small.png');
+    game.load.image('bg', 'img/stars.png');
 
 }
 
@@ -18,30 +18,53 @@ var cat;
 var ennemies;
 var heading = null;
 var acceleration = null;
-
+var map = null;
+var max_stars = 3;
+var nb_rows = Math.round(width / 50) - 1;
+var timer_enemy = 0;
+var interval_enemy = 2;
+var enemies = [];
 
 function create() {
 
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-
+    bg = game.add.tileSprite(0, 0, width, 1000000, 'bg');
+    game.world.setBounds(0, 0, width, 1000000);
     game.stage.backgroundColor = '#2d2d2d';
 
-    //  This will check Sprite vs. Sprite collision
-
-    cat = game.add.sprite(200, 200, 'cat');
+    cat = game.add.sprite(width / 2 + 50, 999800, 'cat');
 
     game.physics.enable(cat, Phaser.Physics.ARCADE);
+    game.camera.follow(cat, Phaser.Camera.FOLLOW_LOCKON);
+    game.camera.y += 200;
+    style = 'STYLE_LOCKON';
 
     cat.name = 'cat';
-    cat.pivot.x = 40;
-    cat.pivot.y = 128;
-    
+    cat.pivot.x = 35;
+    cat.pivot.y = 50;
+    cat.anchor.setTo(0.5, 0.5);
+    cat.angle -= 90;
+    cat.animations.add('move');
+    cat.animations.play('move', 10, true, true);
+    cat.enableBody = true;
+    cat.physicsBodyType = Phaser.Physics.ARCADE;
+    cat.body.collideWorldBounds = true;
 }
 
 function update() {
 
     // object1, object2, collideCallback, processCallback, callbackContext
     // game.physics.arcade.collide(sprite1, sprite2, collisionHandler, null, this);
+    if (this.game.time.totalElapsedSeconds() >= timer_enemy) {
+        var nb = getRandomIntInclusive(1, max_stars);
+        var row = getRandomIntInclusive(0, nb_rows);
+        var pos_x = row * 50;
+        var g = game.add.group();
+        for (var i = 0; i < nb; i++) {
+            g.create(pos_x, cat.y - height - (i * 100),'star');
+        }
+        timer_enemy += interval_enemy;
+        enemies.push(g);
+    }
     navigator.compass.getCurrentHeading(compassSuccess, compassError);
     navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
     moveCat();
@@ -57,50 +80,22 @@ function collisionHandler (obj1, obj2) {
 
 function render() {
 
-    game.debug.body(cat);
+/*    game.debug.body(cat);*/
     game.debug.text('Elapsed seconds: ' + this.game.time.totalElapsedSeconds(), 32, 32);
 
 }
 
 function moveCat() {
-    // var speed = 0;
-    // if (game.acc.z > 7) {
-    //     speed = -4;
-    // } else if (game.acc.z > 6) {
-    //     speed = -2;
-    // } else if (game.acc.z < 4) {
-    //     speed = 4;
-    // } else if (game.acc.z < 3) {
-    //     speed = 2;
-    // }
-    // var rotate = 0;
-    // if (game.acc.x > 2) {
-    //     rotate = -4;
-    // } else if (game.acc.x > 1) {
-    //     rotate = -2;
-    // } else if (game.acc.x < -2) {
-    //     rotate = 4;
-    // } else if (game.acc.x < -1) {
-    //     rotate = 2;
-    // }
-    // game.old_compass = game.compass;
-    // game.position = ecocat.offset();
-    // var x = game.position.top + speed;
-    // var y = game.position.left + rotate;
-    // x = Math.min(x, height - ecocat_height);
-    // x = Math.max(0, x);
-    // y = Math.min(y, width - ecocat_width);
-    // y = Math.max(0, y);
-    // ecocat.offset({top: x, left: y});
     if (acceleration) {
-        cat.body.velocity.y = (acceleration.z - 5) * 10;
-        cat.body.velocity.x = acceleration.x * 10;
+        cat.body.velocity.y = (acceleration.z - 5) * -20;
+        cat.body.velocity.x = acceleration.x * -20;
     }
+    cat.body.velocity.y -= 250;
 }
 
 function compassSuccess (data) {
     heading = data.trueHeading;
-    $(".debug #true").html("heading: " + heading);
+    // $(".debug #true").html("heading: " + heading);
 }
 
 function compassError (data) {
@@ -109,9 +104,9 @@ function compassError (data) {
 
 function accelerometerSuccess (data) {
     acceleration = data;
-    $(".debug #x").html("x = " + data.x);
-    $(".debug #y").html("y = " + data.y);
-    $(".debug #z").html("z = " + data.z);
+    // $(".debug #x").html("x = " + data.x);
+    // $(".debug #y").html("y = " + data.y);
+    // $(".debug #z").html("z = " + data.z);
 }
 
 function accelerometerError (data) {

@@ -24,6 +24,7 @@ var nb_rows = Math.round(width / 50) - 1;
 var timer_enemy = 0;
 var interval_enemy = 2;
 var enemies = [];
+var game_speed = 250;
 
 function create() {
 
@@ -62,13 +63,17 @@ function update() {
         for (var i = 0; i < nb; i++) {
             g.create(pos_x, cat.y - height - (i * 100),'star');
         }
-        timer_enemy += interval_enemy;
+        timer_enemy = this.game.time.totalElapsedSeconds() + interval_enemy;
+        game.time.events.add(Phaser.Timer.SECOND * (height / game_speed) * 4, destroy, g);
         enemies.push(g);
     }
     navigator.compass.getCurrentHeading(compassSuccess, compassError);
     navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
     moveCat();
+}
 
+function destroy (obj) {
+    this.destroy();
 }
 
 function collisionHandler (obj1, obj2) {
@@ -90,7 +95,7 @@ function moveCat() {
         cat.body.velocity.y = (acceleration.z - 5) * -20;
         cat.body.velocity.x = acceleration.x * -20;
     }
-    cat.body.velocity.y -= 250;
+    cat.body.velocity.y -= game_speed;
 }
 
 function compassSuccess (data) {

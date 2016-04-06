@@ -9,8 +9,11 @@ var game = new Phaser.Game(width, height, Phaser.CANVAS, 'Eco Cat', { preload: p
 function preload() {
 
     game.load.spritesheet('cat', 'img/nyan-cat.png', 100, 70, 6);
+    game.load.spritesheet('explosion', 'img/explosion.png', 200, 190, 5);
     game.load.image('star', 'img/star-small.png');
     game.load.image('bg', 'img/stars.png');
+    game.load.image('flower', 'img/flower.png');
+    game.load.image('shield', 'img/shield.png');
 
 }
 
@@ -23,18 +26,35 @@ var max_stars = 3;
 var nb_rows = Math.round(width / 50) - 1;
 var timer_enemy = 0;
 var interval_enemy = 2;
-var enemies = [];
+var enemies = null;
 var game_speed = 250;
+var life = 10;
+var timer_until_shield = 0;
+var shield = false;
+var cat_group;
+var score = 0;
+
+function print_life(life) {
+    $("#life").html("life: " + life);
+}
+function print_score(score) {
+    $("#score").html("score: " + score);
+}
+print_life(life);
+print_score(score);
 
 function create() {
-
+    game.physics.startSystem(Phaser.Physics.ARCADE);
     bg = game.add.tileSprite(0, 0, width, 1000000, 'bg');
     game.world.setBounds(0, 0, width, 1000000);
     game.stage.backgroundColor = '#2d2d2d';
 
     cat = game.add.sprite(width / 2 + 50, 999800, 'cat');
+    cat_group = game.add.group();
+    cat_group.add(cat);
 
-    game.physics.enable(cat, Phaser.Physics.ARCADE);
+    game.physics.arcade.enable(cat);
+    enemies = game.add.physicsGroup();
     game.camera.follow(cat, Phaser.Camera.FOLLOW_LOCKON);
     game.camera.y += 200;
     style = 'STYLE_LOCKON';
@@ -47,25 +67,46 @@ function create() {
     cat.animations.add('move');
     cat.animations.play('move', 10, true, true);
     cat.enableBody = true;
-    cat.physicsBodyType = Phaser.Physics.ARCADE;
     cat.body.collideWorldBounds = true;
+    cat.body.immovable = true;
+    cat.body.setSize(55, 80, -5, 0);
+
+    game.input.onDown.add(activate_shield, this);
+    game.time.events.add(Phaser.Timer.SECOND * 60, increase_game_speed, this);
+    game.time.events.add(Phaser.Timer.SECOND * 20, add_enemies, this);
+}
+
+function increase_game_speed () {
+    game_speed += 50;
+    game.time.events.add(Phaser.Timer.SECOND * 60, increase_game_speed, this);
+}
+
+function add_enemies () {
+    max_stars += 1;
+    interval_enemy -= 0.1;
+    game.time.events.add(Phaser.Timer.SECOND * 20, add_enemies, this);
 }
 
 function update() {
 
     // object1, object2, collideCallback, processCallback, callbackContext
-    // game.physics.arcade.collide(sprite1, sprite2, collisionHandler, null, this);
+    game.physics.arcade.collide(cat, enemies, collisionHandler, null, this);
     if (this.game.time.totalElapsedSeconds() >= timer_enemy) {
         var nb = getRandomIntInclusive(1, max_stars);
         var row = getRandomIntInclusive(0, nb_rows);
         var pos_x = row * 50;
-        var g = game.add.group();
+        // var g = game.add.group();
         for (var i = 0; i < nb; i++) {
-            g.create(pos_x, cat.y - height - (i * 100),'star');
+            // enemies.create(pos_x, cat.y - height - (i * 100), 'star');
+            var star = game.add.sprite(pos_x, cat.y - height - (i * 100), 'star');
+            game.time.events.add(Phaser.Timer.SECOND * (height / game_speed) * 4, destroy, star);
+            // game.physics.enable(star, Phaser.Physics.ARCADE);
+            // star.body.immovable = true;
+            // g.add(star);
+            enemies.add(star);
         }
         timer_enemy = this.game.time.totalElapsedSeconds() + interval_enemy;
-        game.time.events.add(Phaser.Timer.SECOND * (height / game_speed) * 4, destroy, g);
-        enemies.push(g);
+        // enemies.add(g);
     }
     navigator.compass.getCurrentHeading(compassSuccess, compassError);
     navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
@@ -78,24 +119,75 @@ function destroy (obj) {
 
 function collisionHandler (obj1, obj2) {
 
-    //  The two sprites are colliding
-    game.stage.backgroundColor = '#992d2d';
+    var emitter = game.add.emitter(0, 0, 100);
 
+    emitter.makeParticles('flower');
+    emitter.gravity = 200;
+    particleBurst(emitter, obj2);
+    console.log("BOOM");
+    obj2.destroy();
+    if (!shield) {
+        life--;
+        print_life(life);
+        if (life == 0) {
+            game.add.sprite(cat.x + 25, cat.y + 35, 'explosion');
+            cat.destroy();
+            return;
+        }
+    } else {
+        score++;
+        print_score(score);
+    }
 }
 
 function render() {
 
-/*    game.debug.body(cat);*/
-    game.debug.text('Elapsed seconds: ' + this.game.time.totalElapsedSeconds(), 32, 32);
+    // game.debug.body(cat);
+    // game.debug.body(enemies);
+    // game.debug.text('Elapsed seconds: ' + this.game.time.totalElapsedSeconds(), 32, 32);
 
+}
+
+function particleBurst(emitter, obj) {
+
+    emitter.x = obj.x + 25;
+    emitter.y = obj.y + 25;
+
+    emitter.start(true, 4000, null, 10);
+
+    //  And 2 seconds later we'll destroy the emitter
+    game.time.events.add(2000, destroyEmitter, emitter);
+
+}
+
+function destroyEmitter() {
+
+    this.destroy();
+
+}
+
+function activate_shield () {
+    if (this.game.time.totalElapsedSeconds() > timer_until_shield) {
+        var s = game.add.sprite(cat.body.x + 25, cat.body.y + 35, 'shield');
+        s.anchor.setTo(0.5, 0.5);
+        game.physics.arcade.enable(s);
+        cat_group.add(s);
+        timer_until_shield = this.game.time.totalElapsedSeconds() + 10;
+        game.time.events.add(5000, destroyShield, s);
+        shield = true;
+    }
+}
+
+function destroyShield () {
+    this.destroy();
+    shield = false;
 }
 
 function moveCat() {
     if (acceleration) {
-        cat.body.velocity.y = (acceleration.z - 5) * -20;
-        cat.body.velocity.x = acceleration.x * -20;
+        cat_group.setAll('body.velocity.y', (acceleration.z - 5) * -20 - game_speed);
+        cat_group.setAll('body.velocity.x', acceleration.x * -20);
     }
-    cat.body.velocity.y -= game_speed;
 }
 
 function compassSuccess (data) {
@@ -119,112 +211,3 @@ function accelerometerError (data) {
     $(".debug #y").html("y = " + data);
     $(".debug #z").html("z = " + data);
 }
-
-
-
-/*var ecocat = $("#ecocat:first");
-var ecocat_width = 80;
-var ecocat_height = 256;
-
-var bg = $(".app");
-ecocat.offset({top: height / 2, left: width / 2});*/
-/*var game = {
-    position: ecocat.offset(),
-    acc: null,
-    compass: null,
-    old_compass: null,
-    max_z: 0,
-    min_z: 0,
-    bg_pos: 0,
-    game_speed: 2,
-    frequency: 100,
-    ennemies: [],
-    ennemies_count: 0,
-    init: function () {
-        setInterval(game.updateCat, 40);
-    },
-    updateCompass: function (data) {
-        game.compass = data.trueHeading;
-        $(".debug #true").html("true = " + data.trueHeading);
-    },
-    updateAcc: function (data) {
-        game.acc = data;
-        $(".debug #x").html("x = " + data.x);
-        $(".debug #y").html("y = " + data.y);
-        $(".debug #z").html("z = " + data.z);
-    },
-    createEnnemies: function () {
-        var nb = getRandomIntInclusive(1, 6);
-        var pos_x = getRandomIntInclusive(25, width - 25);
-        for (var i = 0; i < nb; i++) {
-            $(".app").append("<img src='img/star-small.png' id='star-" + game.ennemies_count + "'>");
-            var id = $("#star-" + game.ennemies_count + ":first");
-            var pos_y = 0 - (i * 50);
-            id.css({
-                "position": "absolute",
-                "top": pos_y,
-                "left": pos_x
-            });
-            game.ennemies.push({
-                pos_y: pos_y,
-                pos_x: pos_x,
-                dmg: 1,
-                id: id
-            });
-            game.ennemies_count++;
-        }
-        console.log(game.ennemies);
-    },
-    moveEnnemies: function () {
-        for (var i = 0; i < game.ennemies.length; i++) {
-            var ennemy = game.ennemies[i];
-            ennemy.pos_y += game.game_speed;
-            ennemy.id.offset({
-                top: ennemy.pos_y,
-                left: ennemy.pos_x
-            });
-            if (ennemy.pos_y > height - 50) {
-                ennemy.id.remove();
-                game.ennemies.slice(i, i + 1);
-            }
-        }
-    },
-    updateCat: function () {
-        if (getRandomIntInclusive(0, game.frequency) == 0) {
-            game.createEnnemies();
-        }
-        game.moveEnnemies();
-        game.bg_pos += game.game_speed;
-        bg.css({"background-position": "0px " + game.bg_pos + "px"});
-        var speed = 0;
-        if (game.acc.z > 7) {
-            speed = -4;
-        } else if (game.acc.z > 6) {
-            speed = -2;
-        } else if (game.acc.z < 4) {
-            speed = 4;
-        } else if (game.acc.z < 3) {
-            speed = 2;
-        }
-        var rotate = 0;
-        if (game.acc.x > 2) {
-            rotate = -4;
-        } else if (game.acc.x > 1) {
-            rotate = -2;
-        } else if (game.acc.x < -2) {
-            rotate = 4;
-        } else if (game.acc.x < -1) {
-            rotate = 2;
-        }
-        game.old_compass = game.compass;
-        game.position = ecocat.offset();
-        var x = game.position.top + speed;
-        var y = game.position.left + rotate;
-        x = Math.min(x, height - ecocat_height);
-        x = Math.max(0, x);
-        y = Math.min(y, width - ecocat_width);
-        y = Math.max(0, y);
-        ecocat.offset({top: x, left: y});
-    }
-}
-game.init();*/

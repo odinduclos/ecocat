@@ -15,59 +15,61 @@ function preload() {
     game.load.image('flower', 'img/flower.png');
     game.load.image('shield', 'img/shield.png');
 
+/*    $("#score").css({
+        position: "absolute",
+        top: (height - 60) + "px",
+    });*/
 }
 
-var cat;
-var ennemies;
+var cat = null;
 var heading = null;
 var acceleration = null;
-var map = null;
-var max_stars = 3;
+var max_stars;
 var nb_rows = Math.round(width / 50) - 1;
-var timer_enemy = 0;
-var interval_enemy = 2;
+var timer_enemy;
+var interval_enemy;
 var enemies = null;
-var game_speed = 250;
-var life = 10;
-var timer_until_shield = 0;
-var shield = false;
-var cat_group;
-var score = 0;
-var end_game = false;
+var game_speed;
+var life;
+var timer_until_shield
+var shield;
+var cat_group = null;
+var score;
+var end_game;
+var last_time_score;
+var combo;
 
-var duration_wo_shield = 10;
-var duration_shield = 5;
-var bar = 100;
+var duration_wo_shield;
+var duration_shield;
+var bar;
 
-
-function print_life(life) {
-    var elmt = "";
-    for (var i = 0; i < life; i++) {
-        elmt += "<img src='img/heart.png'>"
-    }
-    $("#life").html(elmt);
+function init_vars() {
+    max_stars = 3;
+    timer_enemy = 0;
+    interval_enemy = 2;
+    game_speed = 250;
+    life = 1;
+    timer_until_shield = 0;
+    shield = false;
+    score = 0;
+    end_game = false;
+    last_time_score = 0;
+    combo = 0;
+    duration_wo_shield = 10;
+    duration_shield = 5;
+    bar = 100;
 }
-function print_score(score) {
-    $("#score").html(score);
-}
-print_life(life);
-print_score(score);
 
-function create() {
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-    bg = game.add.tileSprite(0, 0, width, 1000000, 'bg');
-    game.world.setBounds(0, 0, width, 1000000);
-    game.stage.backgroundColor = '#2d2d2d';
+init_vars();
 
+function create_env() {
     cat = game.add.sprite(width / 2 + 50, 999800, 'cat');
     cat_group = game.add.group();
     cat_group.add(cat);
-
     game.physics.arcade.enable(cat);
     enemies = game.add.physicsGroup();
     game.camera.follow(cat, Phaser.Camera.FOLLOW_LOCKON);
     game.camera.y += 200;
-    style = 'STYLE_LOCKON';
 
     cat.name = 'cat';
     cat.pivot.x = 35;
@@ -81,9 +83,37 @@ function create() {
     cat.body.immovable = true;
     cat.body.setSize(55, 80, -5, 0);
 
+    print_life(life);
+    print_score(score);
+}
+
+$("#reset").on("click", reset);
+
+
+function print_life(life) {
+    var elmt = "";
+    for (var i = 0; i < life; i++) {
+        elmt += "<img src='img/heart.png'>"
+    }
+    $("#life").html(elmt);
+}
+function print_score(score) {
+    $("#score").html(score);
+}
+function print_combo(combo) {
+    $("#score").append("+" + combo);
+}
+
+function create() {
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+    bg = game.add.tileSprite(0, 0, width, 1000000, 'bg');
+    game.world.setBounds(0, 0, width, 1000000);
+    game.stage.backgroundColor = '#2d2d2d';
     game.input.onDown.add(activate_shield, this);
     game.time.events.add(Phaser.Timer.SECOND * 60, increase_game_speed, this);
     game.time.events.add(Phaser.Timer.SECOND * 20, add_enemies, this);
+
+    create_env();
 }
 
 function increase_game_speed () {
@@ -111,12 +141,16 @@ function update() {
         // var g = game.add.group();
         for (var i = 0; i < nb; i++) {
             // enemies.create(pos_x, cat.y - height - (i * 100), 'star');
-            var star = game.add.sprite(pos_x, cat.y - height - (i * 100), 'star');
+            var star = game.add.sprite(pos_x, cat.y - height - (i * 150), 'star');
             game.time.events.add(Phaser.Timer.SECOND * (height / game_speed) * 4, destroy, star);
             // game.physics.enable(star, Phaser.Physics.ARCADE);
             // star.body.immovable = true;
             // g.add(star);
             enemies.add(star);
+            star.pivot.x = 35;
+            star.pivot.y = 50;
+            star.anchor.setTo(0.5, 0.5);
+            star.body.angularVelocity = getRandomIntInclusive(-200, 200);
         }
         timer_enemy = this.game.time.totalElapsedSeconds() + interval_enemy;
         // enemies.add(g);
@@ -124,6 +158,11 @@ function update() {
     navigator.compass.getCurrentHeading(compassSuccess, compassError);
     navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
     moveCat();
+    if (this.game.time.totalElapsedSeconds() >= last_time_score + 2) {
+        score += combo;
+        print_score(score);
+        combo = 0;
+    }
 }
 
 function destroy (obj) {
@@ -143,7 +182,7 @@ function collisionHandler (obj1, obj2) {
         life--;
         print_life(life);
         if (life == 0) {
-            exp = game.add.sprite(cat.x + 25, cat.y + 35, 'explosion');
+            exp = game.add.sprite(cat.body.x + 25, cat.body.y + 35, 'explosion');
             exp.animations.add('explode');
             exp.animations.play('explode', 10, false, true);
             end_game = true;
@@ -153,12 +192,38 @@ function collisionHandler (obj1, obj2) {
             exp.anchor.setTo(0.5, 0.5);
             cat_group.add(exp);
             cat.visible = false;
+            enemies.destroy();
+            $("#screen").show();
+            $("#menu").hide();
+            var scores = JSON.parse(localStorage.getItem("scores"));
+            if (scores === null) {
+                scores = [];
+            }
+            scores.push(score);
+            scores.sort(compareNumbersDesc);
+            localStorage.setItem("scores",JSON.stringify(scores));
+            $("#screen ol").html("");
+            for (var i = 0; i < scores.length && i < 4; i++) {
+                $("#screen ol").append("<li>" + scores[i] + "</li>");
+            }
             // cat.destroy();
         }
     } else {
         score++;
+        var cur_time = this.game.time.totalElapsedSeconds();
+        if (cur_time < last_time_score + 2) {
+            combo += Math.round(0.5 * (combo + 1));
+        }
         print_score(score);
+        if (combo > 0) {
+            print_combo(combo);
+        }
+        last_time_score = cur_time;
     }
+}
+
+function compareNumbersDesc(a, b) {
+    return b - a;
 }
 
 function render() {
@@ -171,8 +236,8 @@ function render() {
 
 function particleBurst(emitter, obj) {
 
-    emitter.x = obj.x + 25;
-    emitter.y = obj.y + 25;
+    emitter.x = obj.body.x + 25;
+    emitter.y = obj.body.y + 25;
 
     emitter.start(true, 4000, null, 10);
 
@@ -229,7 +294,7 @@ function compassSuccess (data) {
 }
 
 function compassError (data) {
-    $(".debug #true").html("heading: " + data);
+    // $(".debug #true").html("heading: " + data);
 }
 
 function accelerometerSuccess (data) {
@@ -240,7 +305,18 @@ function accelerometerSuccess (data) {
 }
 
 function accelerometerError (data) {
-    $(".debug #x").html("x = " + data);
-    $(".debug #y").html("y = " + data);
-    $(".debug #z").html("z = " + data);
+    // $(".debug #x").html("x = " + data);
+    // $(".debug #y").html("y = " + data);
+    // $(".debug #z").html("z = " + data);
+}
+
+function reset() {
+    cat.destroy();
+    cat_group.destroy();
+    
+    init_vars();
+    create_env();
+
+    $("#screen").hide();
+    $("#menu").show();
 }

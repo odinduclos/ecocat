@@ -15,6 +15,10 @@ function preload() {
     game.load.image('flower', 'img/flower.png');
     game.load.image('shield', 'img/shield.png');
 
+/*    $("#score").css({
+        position: "absolute",
+        top: (height - 60) + "px",
+    });*/
 }
 
 var cat;
@@ -34,6 +38,8 @@ var shield = false;
 var cat_group;
 var score = 0;
 var end_game = false;
+var last_time_score = 0;
+var combo = 0;
 
 var duration_wo_shield = 10;
 var duration_shield = 5;
@@ -49,6 +55,9 @@ function print_life(life) {
 }
 function print_score(score) {
     $("#score").html(score);
+}
+function print_combo(combo) {
+    $("#score").append("+" + combo);
 }
 print_life(life);
 print_score(score);
@@ -84,6 +93,12 @@ function create() {
     game.input.onDown.add(activate_shield, this);
     game.time.events.add(Phaser.Timer.SECOND * 60, increase_game_speed, this);
     game.time.events.add(Phaser.Timer.SECOND * 20, add_enemies, this);
+
+    $(window).bind('swipetop',applySpeed);
+}
+
+function applySpeed() {
+    print_score(1000000);
 }
 
 function increase_game_speed () {
@@ -111,12 +126,16 @@ function update() {
         // var g = game.add.group();
         for (var i = 0; i < nb; i++) {
             // enemies.create(pos_x, cat.y - height - (i * 100), 'star');
-            var star = game.add.sprite(pos_x, cat.y - height - (i * 100), 'star');
+            var star = game.add.sprite(pos_x, cat.y - height - (i * 150), 'star');
             game.time.events.add(Phaser.Timer.SECOND * (height / game_speed) * 4, destroy, star);
             // game.physics.enable(star, Phaser.Physics.ARCADE);
             // star.body.immovable = true;
             // g.add(star);
             enemies.add(star);
+            star.pivot.x = 35;
+            star.pivot.y = 50;
+            star.anchor.setTo(0.5, 0.5);
+            star.body.angularVelocity = getRandomIntInclusive(-200, 200);
         }
         timer_enemy = this.game.time.totalElapsedSeconds() + interval_enemy;
         // enemies.add(g);
@@ -124,6 +143,11 @@ function update() {
     navigator.compass.getCurrentHeading(compassSuccess, compassError);
     navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
     moveCat();
+    if (this.game.time.totalElapsedSeconds() >= last_time_score + 2) {
+        score += combo;
+        print_score(score);
+        combo = 0;
+    }
 }
 
 function destroy (obj) {
@@ -143,7 +167,7 @@ function collisionHandler (obj1, obj2) {
         life--;
         print_life(life);
         if (life == 0) {
-            exp = game.add.sprite(cat.x + 25, cat.y + 35, 'explosion');
+            exp = game.add.sprite(cat.body.x + 25, cat.body.y + 35, 'explosion');
             exp.animations.add('explode');
             exp.animations.play('explode', 10, false, true);
             end_game = true;
@@ -153,12 +177,37 @@ function collisionHandler (obj1, obj2) {
             exp.anchor.setTo(0.5, 0.5);
             cat_group.add(exp);
             cat.visible = false;
+            enemies.destroy();
+            $("#screen").show();
+            $("#menu").hide();
+            var scores = JSON.parse(localStorage.getItem("scores"));
+            if (scores === null) {
+                scores = [];
+            }
+            scores.push(score);
+            scores.sort(compareNumbersDesc);
+            localStorage.setItem("scores",JSON.stringify(scores));
+            for (var i = 0; i < scores.length && i <= 3; i++) {
+                $("#screen ol").append("<li>" + scores[i] + "</li>");
+            }
             // cat.destroy();
         }
     } else {
         score++;
+        var cur_time = this.game.time.totalElapsedSeconds();
+        if (cur_time < last_time_score + 2) {
+            combo += Math.round(0.5 * (combo + 1));
+        }
         print_score(score);
+        if (combo > 0) {
+            print_combo(combo);
+        }
+        last_time_score = cur_time;
     }
+}
+
+function compareNumbersDesc(a, b) {
+    return b - a;
 }
 
 function render() {
@@ -171,8 +220,8 @@ function render() {
 
 function particleBurst(emitter, obj) {
 
-    emitter.x = obj.x + 25;
-    emitter.y = obj.y + 25;
+    emitter.x = obj.body.x + 25;
+    emitter.y = obj.body.y + 25;
 
     emitter.start(true, 4000, null, 10);
 
@@ -229,7 +278,7 @@ function compassSuccess (data) {
 }
 
 function compassError (data) {
-    $(".debug #true").html("heading: " + data);
+    // $(".debug #true").html("heading: " + data);
 }
 
 function accelerometerSuccess (data) {
@@ -240,7 +289,7 @@ function accelerometerSuccess (data) {
 }
 
 function accelerometerError (data) {
-    $(".debug #x").html("x = " + data);
-    $(".debug #y").html("y = " + data);
-    $(".debug #z").html("z = " + data);
+    // $(".debug #x").html("x = " + data);
+    // $(".debug #y").html("y = " + data);
+    // $(".debug #z").html("z = " + data);
 }

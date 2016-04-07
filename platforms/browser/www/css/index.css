@@ -26,6 +26,11 @@ body {
     -webkit-user-select: none;                  /* prevent copy paste, to allow, change 'none' to 'text' */
 }
 
+@font-face {
+    font-family: pixel;
+    src: url("../font/04B_30__.TTF");
+}
+
 /* Portrait layout (default) */
 .app {
 }
@@ -92,6 +97,27 @@ body {
     position: absolute;
     z-index: 2;
 }
+
+#view {
+    z-index: 2;
+}
+
+#shield {
+    bottom: 0;
+    height: 12px;
+}
+
+#shield .progress-bar {
+    width: 100%;
+}
+
+#score {
+    font-size: 30px;
+    font-family: pixel;
+    font-weight: bold;
+    color: white;
+}
+
 
 canvas {
     position: absolute;

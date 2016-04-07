@@ -28,18 +28,27 @@ var timer_enemy = 0;
 var interval_enemy = 2;
 var enemies = null;
 var game_speed = 250;
-var life = 1;
+var life = 10;
 var timer_until_shield = 0;
 var shield = false;
 var cat_group;
 var score = 0;
 var end_game = false;
 
+var duration_wo_shield = 10;
+var duration_shield = 5;
+var bar = 100;
+
+
 function print_life(life) {
-    $("#life").html("life: " + life);
+    var elmt = "";
+    for (var i = 0; i < life; i++) {
+        elmt += "<img src='img/heart.png'>"
+    }
+    $("#life").html(elmt);
 }
 function print_score(score) {
-    $("#score").html("score: " + score);
+    $("#score").html(score);
 }
 print_life(life);
 print_score(score);
@@ -134,7 +143,7 @@ function collisionHandler (obj1, obj2) {
         life--;
         print_life(life);
         if (life == 0) {
-            exp = game.add.sprite(cat.x, cat.y, 'explosion');
+            exp = game.add.sprite(cat.x + 25, cat.y + 35, 'explosion');
             exp.animations.add('explode');
             exp.animations.play('explode', 10, false, true);
             end_game = true;
@@ -184,15 +193,27 @@ function activate_shield () {
         s.anchor.setTo(0.5, 0.5);
         game.physics.arcade.enable(s);
         cat_group.add(s);
-        timer_until_shield = this.game.time.totalElapsedSeconds() + 10;
-        game.time.events.add(5000, destroyShield, s);
+        game.time.events.add(duration_shield * 1000, destroyShield, s);
+        game.time.events.repeat(Phaser.Timer.SECOND / (10 / duration_shield), 10, reduceBar, this);
         shield = true;
     }
+}
+
+function reduceBar() {
+    bar -= 10;
+    $("#shield .progress-bar").css("width", bar + "%");
+}
+
+function increaseBar() {
+    bar += 10;
+    $("#shield .progress-bar").css("width", bar + "%");
 }
 
 function destroyShield () {
     this.destroy();
     shield = false;
+    timer_until_shield = game.time.totalElapsedSeconds() + duration_wo_shield;
+    game.time.events.repeat(Phaser.Timer.SECOND / (10 / duration_wo_shield), 10, increaseBar, this);
 }
 
 function moveCat() {

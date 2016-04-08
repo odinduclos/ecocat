@@ -21,29 +21,75 @@ function preload() {
     });*/
 }
 
-var cat;
-var ennemies;
+var cat = null;
 var heading = null;
 var acceleration = null;
-var map = null;
-var max_stars = 3;
+var max_stars;
 var nb_rows = Math.round(width / 50) - 1;
-var timer_enemy = 0;
-var interval_enemy = 2;
+var timer_enemy;
+var interval_enemy;
 var enemies = null;
-var game_speed = 250;
-var life = 10;
-var timer_until_shield = 0;
-var shield = false;
-var cat_group;
-var score = 0;
-var end_game = false;
-var last_time_score = 0;
-var combo = 0;
+var game_speed;
+var life;
+var timer_until_shield
+var shield;
+var cat_group = null;
+var score;
+var end_game;
+var last_time_score;
+var combo;
 
-var duration_wo_shield = 10;
-var duration_shield = 5;
-var bar = 100;
+var duration_wo_shield;
+var duration_shield;
+var bar;
+var next_acc_check;
+
+function init_vars() {
+    max_stars = 3;
+    timer_enemy = 0;
+    interval_enemy = 2;
+    game_speed = 250;
+    life = 10;
+    timer_until_shield = 0;
+    shield = false;
+    score = 0;
+    end_game = false;
+    last_time_score = 0;
+    combo = 0;
+    duration_wo_shield = 10;
+    duration_shield = 5;
+    bar = 100;
+    next_acc_check = 0;
+}
+
+init_vars();
+
+function create_env() {
+    cat = game.add.sprite(width / 2 + 50, 999800, 'cat');
+    cat_group = game.add.group();
+    cat_group.add(cat);
+    game.physics.arcade.enable(cat);
+    enemies = game.add.physicsGroup();
+    game.camera.follow(cat, Phaser.Camera.FOLLOW_LOCKON);
+    game.camera.y += 200;
+
+    cat.name = 'cat';
+    cat.pivot.x = 35;
+    cat.pivot.y = 50;
+    cat.anchor.setTo(0.5, 0.5);
+    cat.angle -= 90;
+    cat.animations.add('move');
+    cat.animations.play('move', 10, true, true);
+    cat.enableBody = true;
+    cat.body.collideWorldBounds = true;
+    cat.body.immovable = true;
+    cat.body.setSize(55, 80, -5, 0);
+
+    print_life(life);
+    print_score(score);
+}
+
+$("#reset").on("click", reset);
 
 
 function print_life(life) {
@@ -59,46 +105,17 @@ function print_score(score) {
 function print_combo(combo) {
     $("#score").append("+" + combo);
 }
-print_life(life);
-print_score(score);
 
 function create() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
     bg = game.add.tileSprite(0, 0, width, 1000000, 'bg');
     game.world.setBounds(0, 0, width, 1000000);
     game.stage.backgroundColor = '#2d2d2d';
-
-    cat = game.add.sprite(width / 2 + 50, 999800, 'cat');
-    cat_group = game.add.group();
-    cat_group.add(cat);
-
-    game.physics.arcade.enable(cat);
-    enemies = game.add.physicsGroup();
-    game.camera.follow(cat, Phaser.Camera.FOLLOW_LOCKON);
-    game.camera.y += 200;
-    style = 'STYLE_LOCKON';
-
-    cat.name = 'cat';
-    cat.pivot.x = 35;
-    cat.pivot.y = 50;
-    cat.anchor.setTo(0.5, 0.5);
-    cat.angle -= 90;
-    cat.animations.add('move');
-    cat.animations.play('move', 10, true, true);
-    cat.enableBody = true;
-    cat.body.collideWorldBounds = true;
-    cat.body.immovable = true;
-    cat.body.setSize(55, 80, -5, 0);
-
     game.input.onDown.add(activate_shield, this);
     game.time.events.add(Phaser.Timer.SECOND * 60, increase_game_speed, this);
     game.time.events.add(Phaser.Timer.SECOND * 20, add_enemies, this);
 
-    $(window).bind('swipetop',applySpeed);
-}
-
-function applySpeed() {
-    print_score(1000000);
+    create_env();
 }
 
 function increase_game_speed () {
@@ -117,9 +134,10 @@ function update() {
         cat.destroy();
         return;
     }
+    var cur_time = this.game.time.totalElapsedSeconds();
     // object1, object2, collideCallback, processCallback, callbackContext
     game.physics.arcade.collide(cat, enemies, collisionHandler, null, this);
-    if (this.game.time.totalElapsedSeconds() >= timer_enemy) {
+    if (cur_time >= timer_enemy) {
         var nb = getRandomIntInclusive(1, max_stars);
         var row = getRandomIntInclusive(0, nb_rows);
         var pos_x = row * 50;
@@ -137,13 +155,16 @@ function update() {
             star.anchor.setTo(0.5, 0.5);
             star.body.angularVelocity = getRandomIntInclusive(-200, 200);
         }
-        timer_enemy = this.game.time.totalElapsedSeconds() + interval_enemy;
+        timer_enemy = cur_time + interval_enemy;
         // enemies.add(g);
     }
-    navigator.compass.getCurrentHeading(compassSuccess, compassError);
-    navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
+    // navigator.compass.getCurrentHeading(compassSuccess, compassError);
+    if (cur_time >= next_acc_check + 0.15) {
+        next_acc_check = cur_time;
+        navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
+    }
     moveCat();
-    if (this.game.time.totalElapsedSeconds() >= last_time_score + 2) {
+    if (cur_time >= last_time_score + 2) {
         score += combo;
         print_score(score);
         combo = 0;
@@ -187,7 +208,8 @@ function collisionHandler (obj1, obj2) {
             scores.push(score);
             scores.sort(compareNumbersDesc);
             localStorage.setItem("scores",JSON.stringify(scores));
-            for (var i = 0; i < scores.length && i <= 3; i++) {
+            $("#screen ol").html("");
+            for (var i = 0; i < scores.length && i < 4; i++) {
                 $("#screen ol").append("<li>" + scores[i] + "</li>");
             }
             // cat.destroy();
@@ -292,4 +314,15 @@ function accelerometerError (data) {
     // $(".debug #x").html("x = " + data);
     // $(".debug #y").html("y = " + data);
     // $(".debug #z").html("z = " + data);
+}
+
+function reset() {
+    cat.destroy();
+    cat_group.destroy();
+    
+    init_vars();
+    create_env();
+
+    $("#screen").hide();
+    $("#menu").show();
 }

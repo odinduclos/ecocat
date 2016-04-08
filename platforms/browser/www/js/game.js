@@ -1,8 +1,3 @@
-function getRandomIntInclusive(min, max) {
-    return Math.floor(Math.random() * (max - min +1)) + min;
-}
-var width = $(window).width();
-var height = $(window).height();
 
 var game = new Phaser.Game(width, height, Phaser.CANVAS, 'Eco Cat', { preload: preload, create: create, update: update, render: render });
 
@@ -15,12 +10,10 @@ function preload() {
     game.load.image('flower', 'img/flower.png');
     game.load.image('shield', 'img/shield.png');
 
-/*    $("#score").css({
-        position: "absolute",
-        top: (height - 60) + "px",
-    });*/
 }
 
+var width = $(window).width();
+var height = $(window).height();
 var cat = null;
 var heading = null;
 var acceleration = null;
@@ -31,24 +24,25 @@ var interval_enemy;
 var enemies = null;
 var game_speed;
 var life;
-var timer_until_shield
+var timer_until_shield;
 var shield;
 var cat_group = null;
 var score;
 var end_game;
 var last_time_score;
 var combo;
-
 var duration_wo_shield;
 var duration_shield;
 var bar;
+var next_acc_check;
+
 
 function init_vars() {
     max_stars = 3;
     timer_enemy = 0;
     interval_enemy = 2;
     game_speed = 250;
-    life = 1;
+    life = 10;
     timer_until_shield = 0;
     shield = false;
     score = 0;
@@ -58,9 +52,14 @@ function init_vars() {
     duration_wo_shield = 10;
     duration_shield = 5;
     bar = 100;
+    next_acc_check = 0;
 }
 
 init_vars();
+
+function getRandomIntInclusive(min, max) {
+    return Math.floor(Math.random() * (max - min +1)) + min;
+}
 
 function create_env() {
     cat = game.add.sprite(width / 2 + 50, 999800, 'cat');
@@ -93,26 +92,27 @@ $("#reset").on("click", reset);
 function print_life(life) {
     var elmt = "";
     for (var i = 0; i < life; i++) {
-        elmt += "<img src='img/heart.png'>"
+        elmt += "<img src='img/heart.png'>";
     }
     $("#life").html(elmt);
 }
+
 function print_score(score) {
     $("#score").html(score);
 }
+
 function print_combo(combo) {
     $("#score").append("+" + combo);
 }
 
 function create() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
-    bg = game.add.tileSprite(0, 0, width, 1000000, 'bg');
+    game.add.tileSprite(0, 0, width, 1000000, 'bg');
     game.world.setBounds(0, 0, width, 1000000);
     game.stage.backgroundColor = '#2d2d2d';
     game.input.onDown.add(activate_shield, this);
     game.time.events.add(Phaser.Timer.SECOND * 60, increase_game_speed, this);
     game.time.events.add(Phaser.Timer.SECOND * 20, add_enemies, this);
-
     create_env();
 }
 
@@ -132,33 +132,30 @@ function update() {
         cat.destroy();
         return;
     }
-    // object1, object2, collideCallback, processCallback, callbackContext
+    var cur_time = this.game.time.totalElapsedSeconds();
     game.physics.arcade.collide(cat, enemies, collisionHandler, null, this);
-    if (this.game.time.totalElapsedSeconds() >= timer_enemy) {
+    if (cur_time >= timer_enemy) {
         var nb = getRandomIntInclusive(1, max_stars);
         var row = getRandomIntInclusive(0, nb_rows);
         var pos_x = row * 50;
-        // var g = game.add.group();
         for (var i = 0; i < nb; i++) {
-            // enemies.create(pos_x, cat.y - height - (i * 100), 'star');
             var star = game.add.sprite(pos_x, cat.y - height - (i * 150), 'star');
             game.time.events.add(Phaser.Timer.SECOND * (height / game_speed) * 4, destroy, star);
-            // game.physics.enable(star, Phaser.Physics.ARCADE);
-            // star.body.immovable = true;
-            // g.add(star);
             enemies.add(star);
             star.pivot.x = 35;
             star.pivot.y = 50;
             star.anchor.setTo(0.5, 0.5);
             star.body.angularVelocity = getRandomIntInclusive(-200, 200);
         }
-        timer_enemy = this.game.time.totalElapsedSeconds() + interval_enemy;
-        // enemies.add(g);
+        timer_enemy = cur_time + interval_enemy;
     }
-    navigator.compass.getCurrentHeading(compassSuccess, compassError);
-    navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
+    if (cur_time >= next_acc_check + 0.15) {
+        next_acc_check = cur_time;
+        // navigator.compass.getCurrentHeading(compassSuccess, compassError);
+        navigator.accelerometer.getCurrentAcceleration(accelerometerSuccess, accelerometerError);
+    }
     moveCat();
-    if (this.game.time.totalElapsedSeconds() >= last_time_score + 2) {
+    if (cur_time >= last_time_score + 2) {
         score += combo;
         print_score(score);
         combo = 0;
@@ -181,14 +178,12 @@ function collisionHandler (obj1, obj2) {
     if (!shield) {
         life--;
         print_life(life);
-        if (life == 0) {
-            exp = game.add.sprite(cat.body.x + 25, cat.body.y + 35, 'explosion');
+        if (life === 0) {
+            var exp = game.add.sprite(cat.body.x + 25, cat.body.y + 35, 'explosion');
             exp.animations.add('explode');
             exp.animations.play('explode', 10, false, true);
             end_game = true;
             game.physics.arcade.enable(exp);
-            // cat_group.setAll('body.velocity.y', 0);
-            // cat_group.setAll('body.velocity.x', 0);
             exp.anchor.setTo(0.5, 0.5);
             cat_group.add(exp);
             cat.visible = false;
@@ -206,7 +201,6 @@ function collisionHandler (obj1, obj2) {
             for (var i = 0; i < scores.length && i < 4; i++) {
                 $("#screen ol").append("<li>" + scores[i] + "</li>");
             }
-            // cat.destroy();
         }
     } else {
         score++;
@@ -240,8 +234,6 @@ function particleBurst(emitter, obj) {
     emitter.y = obj.body.y + 25;
 
     emitter.start(true, 4000, null, 10);
-
-    //  And 2 seconds later we'll destroy the emitter
     game.time.events.add(2000, destroyEmitter, emitter);
 
 }
@@ -253,12 +245,15 @@ function destroyEmitter() {
 }
 
 function activate_shield () {
+    console.log("try activate shield");
     if (this.game.time.totalElapsedSeconds() > timer_until_shield) {
+        console.log("activate shield");
         var s = game.add.sprite(cat.body.x + 25, cat.body.y + 35, 'shield');
         s.anchor.setTo(0.5, 0.5);
         game.physics.arcade.enable(s);
         cat_group.add(s);
         game.time.events.add(duration_shield * 1000, destroyShield, s);
+        timer_until_shield = game.time.totalElapsedSeconds() + duration_wo_shield;
         game.time.events.repeat(Phaser.Timer.SECOND / (10 / duration_shield), 10, reduceBar, this);
         shield = true;
     }
@@ -277,8 +272,7 @@ function increaseBar() {
 function destroyShield () {
     this.destroy();
     shield = false;
-    timer_until_shield = game.time.totalElapsedSeconds() + duration_wo_shield;
-    game.time.events.repeat(Phaser.Timer.SECOND / (10 / duration_wo_shield), 10, increaseBar, this);
+    game.time.events.repeat(Phaser.Timer.SECOND / (10 / (duration_wo_shield - duration_shield)), 10, increaseBar, this);
 }
 
 function moveCat() {
@@ -290,7 +284,6 @@ function moveCat() {
 
 function compassSuccess (data) {
     heading = data.trueHeading;
-    // $(".debug #true").html("heading: " + heading);
 }
 
 function compassError (data) {
@@ -299,9 +292,6 @@ function compassError (data) {
 
 function accelerometerSuccess (data) {
     acceleration = data;
-    // $(".debug #x").html("x = " + data.x);
-    // $(".debug #y").html("y = " + data.y);
-    // $(".debug #z").html("z = " + data.z);
 }
 
 function accelerometerError (data) {

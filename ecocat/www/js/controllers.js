@@ -51,15 +51,15 @@ return {
 })
 
 // $scope, $state, $q, UserService, $ionicLoading
-.controller('AppCtrl', function($scope, $ionicModal, $timeout, $ionicLoading, $state, $q, UserService, $location) {
+.controller('AppCtrl', function($scope, $ionicModal, $timeout, $ionicLoading, $state, $q, UserService, $location,$ionicPlatform) {
 
   //$scope.$on('$ionicView.enter', function(e) {
   //});
 var check = UserService.getUser('facebook')
-if(!check.userID){
-  // alert('totot')
-  $location.path('/app/home')
-}
+// if(!check.userID){
+//   // alert('totot')
+//   $location.path('/app/home')
+// }
 
   // Form data for the login modal
   $scope.loginData = {};
@@ -77,6 +77,33 @@ if(!check.userID){
   };
 
   // Open the login modal
+ $ionicPlatform.ready(function() {
+
+  facebookConnectPlugin.getLoginStatus(function(success){
+    console.log(success);
+    if(success.status === 'connected'){
+        // The user is logged in and has authenticated your app, and response.authResponse supplies
+        // the user's ID, a valid access token, a signed request, and the time the access token
+        // and signed request each expire
+        // console.log('getLoginStatus', success.status);
+
+        // Check if we have our user saved
+        var user = UserService.getUser('facebook');
+        console.log("Je suis connecté")
+        $scope.modal.hide();
+        $location.url('app/home');
+        var fbLoginSuccess = function(response) {
+
+          if (!response.authResponse){
+           fbLoginError("Cannot find the authResponse");
+           return;
+         }
+
+       }
+     }
+   })
+})
+
   $scope.login = function() {
 
      var fbLoginSuccess = function(response) {
@@ -90,7 +117,6 @@ if(!check.userID){
 
     getFacebookProfileInfo(authResponse)
     .then(function(profileInfo) {
-       alert(profileInfo.name)
       // For the purpose of this example I will store user data on local storage
       UserService.setUser({
        authResponse: authResponse,
@@ -100,7 +126,6 @@ if(!check.userID){
        picture : "http://graph.facebook.com/" + authResponse.userID + "/picture?type=large"
     });
       $ionicLoading.hide();
-      alert('Hide false')
       $state.go('app.home');
    }, function(fail){
       // Fail get profile info
@@ -194,10 +219,7 @@ if(!check.userID){
       $scope.closeLogin();
    }, 1000);
  };
- $scope.teste = function(e) {
-  alert(e)
-  alert('tototo')
-}
+
 })
 
 .controller('JeuxCtrl', function($scope, $ionicModal, $timeout, $ionicLoading, $state, BoutiqueService) {

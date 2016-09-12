@@ -4,11 +4,13 @@ remix my energy s project
 #Installation
 
 npm install -g ionic
+
 npm install
 
 #Run
 
 ionic run android
+
 ionic run android -l pour livereload
 
 #Debug chrome
@@ -20,6 +22,7 @@ chrome://inspect/#devices
 Si bug avec le plugin facebbok :
 
 ionic plugin rm phonegap-facebook-plugin
+
 cordova plugin add https://github.com/Wizcorp/phonegap-facebook-plugin.git --variable APP_ID="1170260842991724" --variable APP_NAME="EcoCat"
 
 Si bug Hash key facebook :

@@ -28,9 +28,10 @@ cordova plugin add https://github.com/Wizcorp/phonegap-facebook-plugin.git --var
 Si bug Hash key facebook :
 
 keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore | openssl sha1 -binary | openssl base64
+
 password : android;
 
-et me donné la key pour que je l'ajoute à facebook.
+et me donner la key pour que je l'ajoute à facebook.
 
 
 

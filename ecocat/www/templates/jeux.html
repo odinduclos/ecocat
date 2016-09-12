@@ -1,0 +1,26 @@
+<ion-view view-title="Jeux">
+<ion-content>
+<div id="menu">
+<!-- <button fab>FAB</button> -->
+	<progress max="100" value="100" id="shield"></progress>
+	<div id="life"></div>
+	<div id="score"></div>
+</div>
+<div class="debug">
+	<div id="true"></div>
+	<div id="x"></div>
+	<div id="y"></div>
+	<div id="z"></div>
+</div>
+<div id="game"></div>
+<div id="screen">
+	<div id="title">Game Over</div>
+	<div id="scores">
+		<ol>
+		</ol>
+	</div>
+	<button id="reset" type="submit" class="btn btn-raised btn-primary">Rejouer</button>
+</div>
+<button type="submit" class="btn btn-raised btn-primary api" ng-clik="JeuxCtrl.teste()" data-action="login">Play</button>
+</ion-content>
+</ion-view>

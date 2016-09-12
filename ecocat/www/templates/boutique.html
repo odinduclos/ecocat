@@ -1,0 +1,23 @@
+<ion-view view-title="Boutique">
+<ion-content padding="10">
+<ion-refresher pulling-text="Refreshing..." on-refresh="doRefresh()"></ion-refresher>
+<h5 id="font">Nombre de credit: {{ nbr }}</h5>
+
+<i icon ion-ios7-sunny-outline>Vitesse:</i><br/>
+<button class="button button-small button-dark ion-plus-round" ng-click="plus('vitesse')"></button>
+<!-- <button class="button button-small button-dark ion-moin-round" ng-click="moin(vitesse)">-</button> -->
+<progress max="150" min="0" class="progress" value="{{vitesse}}"> </progress>
+<i icon ion-ios7-sunny-outline>Vie:</i><br/>
+<button class="button button-small button-dark ion-plus-round" ng-click="plus('vie')"></button>
+<!-- <button class="button button-small button-dark ion-moin-round" ng-click="moin(vie)">-</button> -->
+<progress max="5" min="0" class="progress" value="{{vie}}"> </progress>
+<i icon ion-ios7-sunny-outline>duree regeneration du shield:</i><br/>
+<button class="button button-small button-dark ion-plus-round" ng-click="plus('regener')"></button>
+<!-- <button class="button button-small button-dark ion-moin-round" ng-click="moin(renvoi)">-</button> -->
+<progress max="6" min="0" class="progress" value="{{regener}}"> </progress>
+<i icon ion-ios7-sunny-outline>Shield:</i><br/>
+<button class="button button-small button-dark ion-plus-round" ng-click="plus('shield')"></button>
+<!-- <button class="button button-small button-dark ion-moin-round" ng-click="moin(shield)">-</button> -->
+<progress max="6" class="progress" value="{{shield}}"> </progress>
+</ion-content>
+</ion-view>

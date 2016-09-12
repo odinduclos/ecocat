@@ -1,0 +1,143 @@
+/* Empty. Add your own CSS if you like */
+#toto {
+
+}
+@font-face {
+    font-family: 'pixel';
+    src: url("font/04B_30__.TTF");
+}
+body {
+    font-family: 'pixel';
+}
+#font {
+    font-family: 'pixel';
+}
+.progress {
+    background-color: red;
+    color: red;
+}
+.alert {
+    text-align: center;
+}
+progress[value]::-webkit-progress-bar {
+    background-color: #A0A0A0;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+progress[value]::-webkit-progress-value {
+    background-color: #000000;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+
+#facebook {
+ position: relative;
+ top: 300px;
+ background-color: #3b5998;
+ color: white;
+ /*font-weight: bold;*/
+}
+.blink {
+    animation:fade 3000ms infinite;
+    -webkit-animation:fade 3000ms infinite;
+}
+
+.glyphicon {
+    font-size: 40px;
+}
+
+#param {
+    padding: 25px;
+    cursor: pointer;
+    display: none;
+}
+
+.app {
+    background-image: url("../img/stars.png");
+}
+
+.debug {
+    color: white;
+    position: absolute;
+    z-index: 2;
+}
+
+#view {
+    z-index: 2;
+}
+
+#shield {
+    bottom: 0;
+    height: 12px;
+    width: 100%;
+}
+
+#shield .progress-bar {
+    width: 100%;
+}
+
+#score {
+    font-size: 30px;
+    font-family: pixel;
+    font-weight: bold;
+    color: white;
+}
+
+
+canvas {
+
+}
+
+#screen {
+    display: none;
+}
+
+#screen #title {
+    font-size: 40px;
+    font-family: pixel;
+    font-weight: bold;
+    position: relative;
+    top: 80px;
+    left: 50px;
+    color: white;
+}
+
+#screen #scores {
+    font-size: 30px;
+    font-family: pixel;
+    font-weight: bold;
+    color: white;
+    position: relative;
+    top: 140px;
+    left: 160px;
+
+}
+#screen #scores ol li {
+    padding: 14px;
+}
+
+#game {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+#menu {
+    position: absolute;
+    top: 100;
+    left: 50;
+    z-index: 2;
+}
+
+#screen {
+    position: absolute;
+    top: 150;
+    left: 50;
+    z-index: 1;   
+}
+#reset {
+    position: relative;
+    top: 150px;
+    left: 150px;
+}

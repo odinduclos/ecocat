@@ -1,0 +1,52 @@
+<ion-view view-title="Mes info">
+<ion-content padding="10">
+<form name="myForm" ng-submit="test">
+
+	<div class="list">
+		<p>Nombre de personnes :</p>
+		<div class="item range range-positive">
+<!-- 		<i icon ion-ios7-sunny-outline>0</i>
+-->		<input type="range" name="volume" min="0" max="20" value="{{user.min}}" step="1" ng-model="user.value">
+{{user.value}}
+<!-- 		<i>200</i>
+-->	</div>
+</div>
+<div class="list">
+	<label class="item item-input item-select">
+		<div class="input-label">
+			Superficie :
+		</div>
+		<select ng-model="superficie" ng-change="showSelectValue(mode)">
+			<option selected value="1">Entre 18m2 et 24m2</option>
+			<option value="2">Entre 24m2 et 40m2</option>
+			<option value="3">Entre 40m2 et 70m2</option>
+			<option value="4">Entre 70m2 et 100m2</option>
+			<option value="5">Pus de 100m2</option>
+		</select>
+	</label>
+
+</div>
+<div class="list">
+	<label class="item item-input item-select">
+		<div class="input-label">
+			Nombre d'ordinateurs :
+		</div>
+		<select ng-model="ordinateur" ng-change="showSelectValue(mode)">
+			<option selected value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5 et plus</option>
+		</select>
+	</label>
+
+</div>
+<ion-list>
+<ion-checkbox ng-model="tv">TV</ion-checkbox>
+<ion-checkbox ng-model="frigo">Refrigerateur</ion-checkbox>
+</ion-list>
+<button class="button button-dark button-block" id="font" ng-click="submit(superficie, ordinateur, tv, frigo, user.value)">Envoyer</button>
+
+</form>
+</ion-content>
+</ion-view>
